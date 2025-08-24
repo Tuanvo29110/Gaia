@@ -5,6 +5,10 @@ pluginManagement {
         gradlePluginPortal()
         maven("https://repo.spongepowered.org/repository/maven-public/")
         maven("https://maven.fabricmc.net/")
+        maven {
+            name = "canvasmc"
+            url = uri("https://maven.canvasmc.io/snapshots")
+        }
     }
     includeBuild("build-logic")
 }
