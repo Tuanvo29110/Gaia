@@ -35,6 +35,9 @@ import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.status.ChunkStatus;
+import org.bukkit.Bukkit;
+import org.bukkit.World;
+import org.bukkit.plugin.Plugin;
 
 @SuppressWarnings("resource")
 public abstract class VanillaLevel implements Level {
@@ -59,6 +62,8 @@ public abstract class VanillaLevel implements Level {
   }
 
   private boolean restoreSnapshotNow(GaiaSnapshot snapshot, int amount) {
+    Plugin plugin = me.moros.gaia.paper.GaiaBootstrap.getPlugin(GaiaBootstrap.class);
+    
     var chunkSource = chunkSource();
     var levelChunk = chunkSource.getChunkNow(snapshot.x(), snapshot.z());
     if (levelChunk == null) {
@@ -79,10 +84,13 @@ public abstract class VanillaLevel implements Level {
       final int z = zOffset + ((index % 256) / 16);
       final int x = xOffset + ((index % 256) % 16);
       if (snapshot.chunk().region().contains(x, y, z)) {
-        BlockState result = levelChunk.setBlockState(mutablePos.set(x, y, z), toRestore, 512);
-        if (result != null && result != toRestore) {
-          chunkSource.blockChanged(mutablePos);
-        }
+        World world = levelChunk.getLevel().getWorld();
+        Bukkit.getRegionScheduler().execute(plugin, world, x, z, () -> {
+          BlockState result = levelChunk.setBlockState(mutablePos.set(x, y, z), toRestore, 512);
+          if (result != null && result != toRestore) {
+            chunkSource.blockChanged(mutablePos);
+          }
+        });
       }
     }
     return it.hasNext();
