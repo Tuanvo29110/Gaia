@@ -81,7 +81,7 @@ public class PaperGaia extends AbstractGaia<GaiaBootstrap> {
   }
 
   private void bindSelectionService() {
-    if (parent.getServer().getPluginManager().isPluginEnabled("WorldEdit")) {
+    if (parent.getServer().getPluginManager().isPluginEnabled("FastAsyncWorldEdit")) {
       factory.bind(SelectionService.class, BukkitWorldEditSelectionService::new);
     } else {
       factory.bind(SelectionService.class, () -> new GaiaSelectionService(parent));
