@@ -26,6 +26,7 @@ import me.moros.gaia.api.chunk.Snapshot;
 import me.moros.gaia.api.platform.Level;
 import me.moros.gaia.api.util.ChunkUtil;
 import me.moros.gaia.common.util.IndexedIterator;
+import me.moros.gaia.paper.platform.RegionExecutor;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerChunkCache;
 import net.minecraft.server.level.ServerLevel;
@@ -35,18 +36,17 @@ import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.status.ChunkStatus;
-import org.bukkit.Bukkit;
-import org.bukkit.World;
-import org.bukkit.plugin.Plugin;
 
 @SuppressWarnings("resource")
 public abstract class VanillaLevel implements Level {
   private static final TicketType GAIA_TICKET_TYPE = new TicketType(TicketType.NO_TIMEOUT, false, TicketType.TicketUse.LOADING);
 
   private final ServerLevel handle;
+  private final RegionExecutor executor;
 
-  protected VanillaLevel(ServerLevel handle) {
+  protected VanillaLevel(ServerLevel handle, RegionExecutor executor) {
     this.handle = handle;
+    this.executor = executor;
   }
 
   protected ServerLevel handle() {
@@ -62,8 +62,6 @@ public abstract class VanillaLevel implements Level {
   }
 
   private boolean restoreSnapshotNow(GaiaSnapshot snapshot, int amount) {
-    Plugin plugin = me.moros.gaia.paper.GaiaBootstrap.getPlugin(GaiaBootstrap.class);
-    
     var chunkSource = chunkSource();
     var levelChunk = chunkSource.getChunkNow(snapshot.x(), snapshot.z());
     if (levelChunk == null) {
@@ -84,8 +82,7 @@ public abstract class VanillaLevel implements Level {
       final int z = zOffset + ((index % 256) / 16);
       final int x = xOffset + ((index % 256) % 16);
       if (snapshot.chunk().region().contains(x, y, z)) {
-        World world = levelChunk.getLevel().getWorld();
-        Bukkit.getRegionScheduler().execute(plugin, world, x, z, () -> {
+        executor.execute(() -> {
           BlockState result = levelChunk.setBlockState(mutablePos.set(x, y, z), toRestore, 512);
           if (result != null && result != toRestore) {
             chunkSource.blockChanged(mutablePos);
